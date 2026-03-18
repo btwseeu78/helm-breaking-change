@@ -13,6 +13,7 @@ A CLI tool that detects breaking structural changes in Helm subchart dependency 
 5. [Breaking Change Detection Rules](#breaking-change-detection-rules)
 6. [CLI Usage](#cli-usage)
 7. [Architecture Diagram](#architecture-diagram)
+8. [Build and Push Docker Image (for amd64)](#build-and-push-docker-image-for-amd64)
 
 ---
 
@@ -346,3 +347,31 @@ graph TD
     class CMD,CP,DIFF,HR,MOD,REP core
     class HA adapter
 ```
+
+---
+
+## Build and Push Docker Image (for amd64)
+
+To build and push the Docker image for amd64 to Docker Hub (`linuxarpan/helm-breaking-chnage`):
+
+```sh
+# 1. Ensure QEMU is enabled for cross-arch builds (one-time setup)
+docker run --privileged --rm tonistiigi/binfmt --install all
+
+# 2. Create and use a buildx builder (if not already)
+docker buildx create --name mybuilder --use || docker buildx use mybuilder
+docker buildx inspect --bootstrap
+
+# 3. Build and push for amd64
+
+docker buildx build --platform linux/amd64 \
+  -t linuxarpan/helm-breaking-chnage:latest \
+  -t linuxarpan/helm-breaking-chnage:v1.0.0 \
+  --push .
+```
+
+- This will build the image for `linux/amd64` and push both `latest` and `v1.0.0` tags to Docker Hub.
+- You must be logged in to Docker Hub (`docker login`) as `linuxarpan`.
+
+---
+
