@@ -61,7 +61,6 @@ type SubchartReport struct {
 // Report aggregates all subchart reports for the entire run.
 type Report struct {
 	ChartName       string
-	TargetBranch    string
 	SubchartReports []SubchartReport
 	HasBreaking     bool
 }

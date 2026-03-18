@@ -7,66 +7,11 @@ import (
 	"check-breaking-change/internal/models"
 )
 
-// FormatMarkdown generates a markdown-formatted report of all breaking changes.
-func FormatMarkdown(report models.Report) string {
-	var sb strings.Builder
-
-	sb.WriteString(fmt.Sprintf("# Breaking Subchart Changes — `%s`\n\n", report.ChartName))
-	sb.WriteString(fmt.Sprintf("**Target Branch:** `%s`\n\n", report.TargetBranch))
-	sb.WriteString("---\n\n")
-
-	for _, scr := range report.SubchartReports {
-		breakingResults := filterBreaking(scr.Results)
-		infoResults := filterNonBreaking(scr.Results)
-
-		if len(breakingResults) == 0 && len(infoResults) == 0 {
-			continue
-		}
-
-		sb.WriteString(fmt.Sprintf("## Subchart: `%s` (`%s` → `%s`)\n\n", scr.SubchartName, scr.OldVersion, scr.NewVersion))
-
-		if len(breakingResults) > 0 {
-			sb.WriteString("### ⛔ Breaking Changes\n\n")
-			sb.WriteString("| Key Path | Change Type | Details |\n")
-			sb.WriteString("|----------|-------------|----------|\n")
-			for _, r := range breakingResults {
-				sb.WriteString(fmt.Sprintf("| `%s` | %s | %s |\n", r.KeyPath, changeTypeLabel(r.Type), r.Detail))
-			}
-			sb.WriteString("\n")
-
-			// Detailed diff for each breaking change
-			sb.WriteString("<details>\n<summary>Detailed diff</summary>\n\n")
-			for _, r := range breakingResults {
-				sb.WriteString(fmt.Sprintf("#### `%s`\n\n", r.KeyPath))
-				sb.WriteString("```diff\n")
-				sb.WriteString(fmt.Sprintf("- Old: %s\n", formatValue(r.OldValue)))
-				sb.WriteString(fmt.Sprintf("+ New: %s\n", formatValue(r.NewValue)))
-				sb.WriteString("```\n\n")
-			}
-			sb.WriteString("</details>\n\n")
-		}
-
-		if len(infoResults) > 0 {
-			sb.WriteString("### ℹ️ Informational Changes (Non-Breaking)\n\n")
-			sb.WriteString("| Key Path | Change Type | Details |\n")
-			sb.WriteString("|----------|-------------|----------|\n")
-			for _, r := range infoResults {
-				sb.WriteString(fmt.Sprintf("| `%s` | %s | %s |\n", r.KeyPath, changeTypeLabel(r.Type), r.Detail))
-			}
-			sb.WriteString("\n")
-		}
-
-		sb.WriteString("---\n\n")
-	}
-
-	return sb.String()
-}
-
-// FormatStdout generates a plain-text summary for dry-run / stdout output.
+// FormatStdout generates a plain-text summary for stdout output.
 func FormatStdout(report models.Report) string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("Chart: %s (target: %s)\n", report.ChartName, report.TargetBranch))
+	sb.WriteString(fmt.Sprintf("Chart: %s\n", report.ChartName))
 	sb.WriteString(strings.Repeat("=", 60) + "\n\n")
 
 	for _, scr := range report.SubchartReports {
@@ -138,16 +83,3 @@ func changeTypeLabel(ct models.ChangeType) string {
 	}
 }
 
-func formatValue(v interface{}) string {
-	if v == nil {
-		return "<removed>"
-	}
-	if m, ok := v.(map[string]interface{}); ok {
-		var parts []string
-		for k, val := range m {
-			parts = append(parts, fmt.Sprintf("%s: %v", k, val))
-		}
-		return "{" + strings.Join(parts, ", ") + "}"
-	}
-	return fmt.Sprintf("%v", v)
-}

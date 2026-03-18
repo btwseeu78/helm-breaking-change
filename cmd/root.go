@@ -15,11 +15,6 @@ import (
 )
 
 var (
-	gitlabURL         string
-	gitlabToken       string
-	projectID         string
-	mrID              string
-	dryRun            bool
 	helmUser          string
 	helmPass          string
 	helmToken         string
@@ -38,18 +33,13 @@ Also checks nested/transitive subchart dependencies when the parent chart
 overrides their values.
 
 Example:
-  check-breaking-change . override-chart.yaml --dry-run
+  check-breaking-change . override-chart.yaml
   check-breaking-change /path/to/chart /path/to/override-Chart.yaml`,
 	Args: cobra.ExactArgs(2),
 	RunE: run,
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&gitlabURL, "gitlab-url", envOrDefault("GITLAB_URL", ""), "GitLab instance URL")
-	rootCmd.PersistentFlags().StringVar(&gitlabToken, "gitlab-token", envOrDefault("GITLAB_TOKEN", ""), "GitLab API token")
-	rootCmd.PersistentFlags().StringVar(&projectID, "project-id", envOrDefault("GITLAB_PROJECT_ID", ""), "GitLab project ID")
-	rootCmd.PersistentFlags().StringVar(&mrID, "mr-id", envOrDefault("CI_MERGE_REQUEST_IID", ""), "GitLab MR ID (optional, for issue title)")
-	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Print report to stdout without creating a GitLab issue")
 	rootCmd.PersistentFlags().StringVar(&helmUser, "helm-repo-user", envOrDefault("HELM_REPO_USERNAME", ""), "Username for protected Helm repos")
 	rootCmd.PersistentFlags().StringVar(&helmPass, "helm-repo-pass", envOrDefault("HELM_REPO_PASSWORD", ""), "Password for protected Helm repos")
 	rootCmd.PersistentFlags().StringVar(&helmToken, "helm-repo-token", envOrDefault("HELM_REPO_TOKEN", ""), "Token for protected Helm repos")
@@ -223,32 +213,8 @@ func run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Report breaking changes
 	fmt.Println("⛔ Breaking changes detected!")
-
-	if dryRun {
-		fmt.Println("\n--- Markdown Report (dry-run) ---")
-		fmt.Println(reporter.FormatMarkdown(report))
-		os.Exit(1)
-	}
-
-	// Create GitLab issue
-	if gitlabURL == "" || gitlabToken == "" || projectID == "" {
-		fmt.Println("Warning: GitLab credentials not provided. Printing markdown report to stdout.")
-		fmt.Println("\n" + reporter.FormatMarkdown(report))
-		os.Exit(1)
-	}
-
-	glReporter, err := reporter.NewGitLabReporter(gitlabURL, gitlabToken, projectID, mrID)
-	if err != nil {
-		return fmt.Errorf("failed to create GitLab reporter: %w", err)
-	}
-
-	if err := glReporter.Report(report); err != nil {
-		return fmt.Errorf("failed to create GitLab issue: %w", err)
-	}
-
-	os.Exit(1) // Fail CI pipeline
+	os.Exit(1)
 	return nil
 }
 

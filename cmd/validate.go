@@ -26,7 +26,7 @@ This is a self-validation mode: no override file is needed. It answers the quest
 
 Example:
   check-breaking-change validate .
-  check-breaking-change validate /path/to/chart --dry-run`,
+  check-breaking-change validate /path/to/chart`,
 	Args: cobra.ExactArgs(1),
 	RunE: runValidate,
 }
@@ -159,10 +159,6 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("⛔ Validation failed: values.yaml has incompatibilities with upstream subchart defaults.")
-	if dryRun {
-		fmt.Println("\n--- Markdown Report (dry-run) ---")
-		fmt.Println(reporter.FormatMarkdown(report))
-	}
 	os.Exit(1)
 	return nil
 }
