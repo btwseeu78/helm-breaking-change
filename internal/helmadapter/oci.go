@@ -3,6 +3,8 @@ package helmadapter
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"check-breaking-change/internal/models"
@@ -20,15 +22,46 @@ type OCIClientOptions struct {
 }
 
 // NewOCIClient creates a Helm SDK registry client with the given options.
+// If no DockerConfigPath is provided, it uses the default ~/.docker/config.json
+// to leverage system-wide Docker credential helpers (gcloud, ecr, etc.).
 func NewOCIClient(opts OCIClientOptions) (*registry.Client, error) {
 	var clientOpts []registry.ClientOption
-	if opts.DockerConfigPath != "" {
-		clientOpts = append(clientOpts, registry.ClientOptCredentialsFile(opts.DockerConfigPath))
+
+	// Use provided path or fall back to default Docker config
+	configPath := opts.DockerConfigPath
+	if configPath == "" {
+		configPath = defaultDockerConfigPath()
 	}
+	if configPath != "" {
+		clientOpts = append(clientOpts, registry.ClientOptCredentialsFile(configPath))
+	}
+
 	if opts.PlainHTTP {
 		clientOpts = append(clientOpts, registry.ClientOptPlainHTTP())
 	}
 	return registry.NewClient(clientOpts...)
+}
+
+// defaultDockerConfigPath returns the default Docker config path if it exists.
+func defaultDockerConfigPath() string {
+	// Check DOCKER_CONFIG env var first
+	if dockerConfig := os.Getenv("DOCKER_CONFIG"); dockerConfig != "" {
+		configFile := filepath.Join(dockerConfig, "config.json")
+		if _, err := os.Stat(configFile); err == nil {
+			return configFile
+		}
+	}
+
+	// Fall back to ~/.docker/config.json
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	configFile := filepath.Join(home, ".docker", "config.json")
+	if _, err := os.Stat(configFile); err == nil {
+		return configFile
+	}
+	return ""
 }
 
 // LoginOCI performs an explicit login to an OCI registry when username/password are provided.

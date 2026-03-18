@@ -1,8 +1,8 @@
 package helmadapter
 
 import (
-	"bytes"
 	"fmt"
+	"os"
 	"strings"
 
 	"check-breaking-change/internal/models"
@@ -11,8 +11,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/repo"
-
-	"gopkg.in/yaml.v3"
 )
 
 // FetchChartValues downloads a chart from an HTTP(S) Helm repository and returns
@@ -88,11 +86,24 @@ func resolveChartURL(repoURL, chartName, version string, opts []getter.Option) (
 		return "", fmt.Errorf("failed to fetch index.yaml from %s: %w", indexURL, err)
 	}
 
-	idx := &repo.IndexFile{}
-	if err := yaml.NewDecoder(bytes.NewReader(indexData.Bytes())).Decode(idx); err != nil {
+	// Write to temp file and use Helm's LoadIndexFile for proper YAML parsing.
+	// This avoids nil pointer issues that occur with gopkg.in/yaml.v3.
+	tmpFile, err := os.CreateTemp("", "helm-index-*.yaml")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp file for index: %w", err)
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
+
+	if _, err := tmpFile.Write(indexData.Bytes()); err != nil {
+		return "", fmt.Errorf("failed to write index to temp file: %w", err)
+	}
+	tmpFile.Close() // Close before reading
+
+	idx, err := repo.LoadIndexFile(tmpFile.Name())
+	if err != nil {
 		return "", fmt.Errorf("failed to parse index.yaml: %w", err)
 	}
-	idx.SortEntries()
 
 	cv, err := idx.Get(chartName, version)
 	if err != nil {
