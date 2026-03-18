@@ -1,7 +1,7 @@
 # Multi-stage build for smaller final image
 
 # Build stage
-FROM golang:1.25.1-alpine AS builder
+FROM golang:1.25.1 AS builder
 
 WORKDIR /app
 
