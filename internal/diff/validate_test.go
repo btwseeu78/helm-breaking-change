@@ -88,8 +88,8 @@ func TestValidateCurrentValues_OrphanOverride(t *testing.T) {
 	for _, r := range results {
 		if r.KeyPath == "missingKey" && r.Type == models.ChangeKeyOrphanOverride {
 			found = true
-			if r.Breaking {
-				t.Error("orphan override should be non-breaking (informational)")
+			if !r.Breaking {
+				t.Error("orphan override should be breaking — parent sets a key the subchart doesn't have")
 			}
 		}
 	}
@@ -231,7 +231,7 @@ func TestValidateCurrentValues_MixedIssues(t *testing.T) {
 		if r.KeyPath == "image" && r.Type == models.ChangeParentTypeMismatch && r.Breaking {
 			hasTypeMismatch = true
 		}
-		if r.KeyPath == "deprecated" && r.Type == models.ChangeKeyOrphanOverride && !r.Breaking {
+		if r.KeyPath == "deprecated" && r.Type == models.ChangeKeyOrphanOverride && r.Breaking {
 			hasOrphan = true
 		}
 	}

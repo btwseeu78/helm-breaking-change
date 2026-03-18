@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+AGENTS.md
+walkthrough.md
+walkthrough_summary.md
+
+# Build artifacts
+check-breaking-change
+check-breaking-change-linux-amd64
+
+# IDE
+.vscode
+.idea
+
+# Test data that shouldn't be in production image
+e2etest/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# CI/CD
+.github/

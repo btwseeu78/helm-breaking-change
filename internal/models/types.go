@@ -37,7 +37,7 @@ const (
 	ChangeSafeTypeConv                        // lossless type conversion
 	ChangeParentTypeMismatch                  // parent override type incompatible with subchart source type
 	ChangeMissingOverride                     // subchart source key exists in parent-overridden block but parent doesn't set it
-	ChangeKeyOrphanOverride                   // parent overrides a key that doesn't exist in upstream subchart source
+	ChangeKeyOrphanOverride                   // parent overrides a key that doesn't exist in upstream subchart source (breaking — override is ineffective)
 )
 
 // DiffResult holds one detected difference for a key path.

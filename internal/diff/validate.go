@@ -26,15 +26,18 @@ func validateMaps(parentOverrides, sourceValues map[string]interface{}, prefix s
 		fullKey := joinKeyPath(prefix, key)
 		sourceVal, sourceExists := sourceValues[key]
 
-		// Parent overrides a key that doesn't exist in upstream source
+		// Parent overrides a key that doesn't exist in upstream source → BREAKING
+		// The parent chart is setting a value for a key the subchart doesn't
+		// recognise, which means the override is dead/ineffective and the
+		// deployment will not behave as intended.
 		if !sourceExists {
 			*results = append(*results, models.DiffResult{
 				KeyPath:  fullKey,
 				Type:     models.ChangeKeyOrphanOverride,
-				Breaking: false,
+				Breaking: true,
 				OldValue: parentVal,
 				NewValue: nil,
-				Detail:   fmt.Sprintf("Parent overrides %q but key does not exist in upstream subchart source", fullKey),
+				Detail:   fmt.Sprintf("Parent overrides %q but key does not exist in upstream subchart source — override is ineffective (breaking)", fullKey),
 			})
 			continue
 		}
