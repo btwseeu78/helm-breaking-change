@@ -1,0 +1,6 @@
+dependencies:
+- name: gateway-helm
+  repository: oci://docker.io/envoyproxy
+  version: v1.7.0
+digest: sha256:7f4a0b42a6fbbe50d0f47ad1a6b5e19a5ab1ddaf79555c0a912c07e5c236dddc
+generated: "2026-03-14T21:29:13.269146+05:30"
